@@ -10,12 +10,11 @@ class BalanceScreen extends StatefulWidget {
 }
 
 class _BalanceScreenState extends State<BalanceScreen> {
+  late final GastoService _gastoService = GastoService.instance;
+
   @override
   void initState() {
     super.initState();
-    // We can't directly listen to GastosService's stream from here without creating a circular dependency
-    // Instead, we'll create a new instance just for reading data in this screen
-    // Note: In a production app, we'd use a proper state management solution like Provider or Bloc
   }
 
   @override
@@ -327,12 +326,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
   }
 
   Future<Map<String, double>> _getBalances() async {
-    // Create a temporary service instance to get the data
-    final tempService = GastoService();
-    try {
-      return tempService.obtenerBalances();
-    } finally {
-      tempService.dispose();
-    }
+    // Use singleton service to get balances
+    return _gastoService.obtenerBalances();
   }
 }

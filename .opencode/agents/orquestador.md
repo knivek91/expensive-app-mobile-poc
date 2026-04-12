@@ -2,7 +2,8 @@
 description: "Main orchestrator that decomposes objectives into technical tasks and assigns them to appropriate subagents. Use this agent to plan and coordinate full project execution."
 mode: primary
 color: primary
-model: nemotron-3-super-free
+# model: nemotron-3-super-free
+model: opencode/minimax-m2.5-free # try this for some iterations ... is giving better results
 
 permission:
   task:

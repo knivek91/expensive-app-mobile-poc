@@ -12,7 +12,7 @@ class GastoCrearScreen extends StatefulWidget {
 
 class _GastoCrearScreenState extends State<GastoCrearScreen> {
   final _formKey = GlobalKey<FormState>();
-  final GastoService _gastoService = GastoService();
+  final GastoService _gastoService = GastoService.instance;
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _montoController = TextEditingController();
   final TextEditingController _pagadoPorController = TextEditingController();
@@ -201,7 +201,7 @@ class _GastoCrearScreenState extends State<GastoCrearScreen> {
 
               const SizedBox(height: FiscalAtelierTheme.space24),
 
-              // Pagado por field - Filled style with background shift on focus
+              // Pagado por field - Dropdown with two options
               Text(
                 'Pagado por',
                 style: FiscalAtelierTheme.labelMd.copyWith(
@@ -209,21 +209,50 @@ class _GastoCrearScreenState extends State<GastoCrearScreen> {
                 ),
               ),
               const SizedBox(height: FiscalAtelierTheme.space8),
-              _buildTextField(
-                controller: _pagadoPorController,
-                hintText: '¿Quién pagó?',
-                style: FiscalAtelierTheme.bodyMd.copyWith(
-                  color: FiscalAtelierTheme.neutral800,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: FiscalAtelierTheme.space16,
                 ),
-                hintStyle: FiscalAtelierTheme.bodyMd.copyWith(
-                  color: FiscalAtelierTheme.neutral400,
+                decoration: BoxDecoration(
+                  color: FiscalAtelierTheme.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(
+                    FiscalAtelierTheme.radiusMd,
+                  ),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Ingresa quién pagó';
-                  }
-                  return null;
-                },
+                child: DropdownButtonFormField<String>(
+                  value: _pagadoPorController.text.isEmpty
+                      ? null
+                      : _pagadoPorController.text,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  hint: Text(
+                    'Selecciona quién pagó',
+                    style: FiscalAtelierTheme.bodyMd.copyWith(
+                      color: FiscalAtelierTheme.neutral400,
+                    ),
+                  ),
+                  style: FiscalAtelierTheme.bodyMd.copyWith(
+                    color: FiscalAtelierTheme.neutral800,
+                  ),
+                  dropdownColor: FiscalAtelierTheme.surfaceElevated,
+                  items: const [
+                    DropdownMenuItem(value: 'Sienna', child: Text('Sienna')),
+                    DropdownMenuItem(value: 'Robert', child: Text('Robert')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      _pagadoPorController.text = value;
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Selecciona quién pagó';
+                    }
+                    return null;
+                  },
+                ),
               ),
 
               const SizedBox(height: FiscalAtelierTheme.space24),

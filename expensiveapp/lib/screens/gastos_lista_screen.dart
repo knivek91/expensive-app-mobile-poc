@@ -13,18 +13,17 @@ class GastosListaScreen extends StatefulWidget {
 }
 
 class _GastosListaScreenState extends State<GastosListaScreen> {
-  final GastoService _gastoService = GastoService();
   late Stream<List<Gasto>> _gastosStream;
 
   @override
   void initState() {
     super.initState();
-    _gastosStream = _gastoService.gastosStream;
+    _gastosStream = GastoService.instance.gastosStream;
   }
 
   @override
   void dispose() {
-    _gastoService.dispose();
+    // Don't dispose singleton service
     super.dispose();
   }
 
@@ -69,18 +68,22 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
       body: StreamBuilder<List<Gasto>>(
         stream: _gastosStream,
         builder: (context, snapshot) {
-          // 1. First check for loading state (initial load delays)
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Only show loader if truly waiting AND no data received yet
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              snapshot.data == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 2. Then check for error state
+          // For errors
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          // 3. Then check if no data or data is empty
-          if (!snapshot.hasData || (snapshot.data as List<Gasto>).isEmpty) {
+          // Get data - default to empty list if null
+          final gastos = snapshot.data ?? <Gasto>[];
+
+          // Show empty state if no data
+          if (gastos.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -107,11 +110,7 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
             );
           }
 
-          // 4. Finally show the list when we have data and it's not empty
-          final gastos = snapshot.data as List<Gasto>;
-
-          // ListView.builder with spacing instead of Divider
-          // No bottom padding needed - FAB handles visual balance
+          // Show list
           return ListView.builder(
             padding: const EdgeInsets.symmetric(
               horizontal: FiscalAtelierTheme.paddingScreenHorizontal,

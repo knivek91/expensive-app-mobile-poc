@@ -2,14 +2,25 @@ import 'dart:async';
 import '../models/gasto.dart';
 
 class GastoService {
+  static GastoService? _instance;
+
   final List<Gasto> _gastos = [];
   final StreamController<List<Gasto>> _gastosController =
       StreamController<List<Gasto>>.broadcast();
 
   Stream<List<Gasto>> get gastosStream => _gastosController.stream;
 
-  GastoService() {
+  factory GastoService() {
+    return instance;
+  }
+
+  GastoService._internal() {
     _gastosController.add(_gastos);
+  }
+
+  static GastoService get instance {
+    _instance ??= GastoService._internal();
+    return _instance!;
   }
 
   Future<void> agregarGasto(Gasto gasto) async {
