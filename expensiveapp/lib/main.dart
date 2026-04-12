@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/gastos_lista_screen.dart';
+import 'theme/fiscal_atelier_theme.dart';
 
 void main() {
   runApp(const ExpensiveApp());
@@ -12,10 +13,7 @@ class ExpensiveApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Expensive App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: FiscalAtelierTheme.lightTheme,
       home: const GastosListaScreen(),
     );
   }
