@@ -3,9 +3,10 @@ import '../models/gasto.dart';
 import '../services/gasto_service.dart';
 import 'gasto_crear_screen.dart';
 import 'balance_screen.dart';
+import '../theme/fiscal_atelier_theme.dart';
 
 class GastosListaScreen extends StatefulWidget {
-  const GastosListaScreen({Key? key}) : super(key: key);
+  const GastosListaScreen({super.key});
 
   @override
   State<GastosListaScreen> createState() => _GastosListaScreenState();
@@ -31,7 +32,6 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const GastoCrearScreen()));
-    // Refresh is handled by the stream
   }
 
   void _navigateToBalance() {
@@ -44,9 +44,14 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gastos Compartidos'),
+        title: Text(
+          'Gastos Compartidos',
+          style: FiscalAtelierTheme.headlineSm.copyWith(
+            color: FiscalAtelierTheme.neutral800,
+          ),
+        ),
         leading: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(FiscalAtelierTheme.space8),
           child: Image.asset(
             'assets/images/logo-expensive-app.png',
             width: 32,
@@ -64,28 +69,35 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
       body: StreamBuilder<List<Gasto>>(
         stream: _gastosStream,
         builder: (context, snapshot) {
+          // 1. First check for loading state (initial load delays)
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // 2. Then check for error state
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final gastos = snapshot.data!;
-
-          if (gastos.isEmpty) {
+          // 3. Then check if no data or data is empty
+          if (!snapshot.hasData || (snapshot.data as List<Gasto>).isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Aún no hay gastos',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  Icon(
+                    Icons.receipt_long,
+                    size: 64,
+                    color: FiscalAtelierTheme.neutral400,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: FiscalAtelierTheme.space24),
+                  Text(
+                    'Aún no hay gastos',
+                    style: FiscalAtelierTheme.titleMd.copyWith(
+                      color: FiscalAtelierTheme.neutral600,
+                    ),
+                  ),
+                  const SizedBox(height: FiscalAtelierTheme.space16),
                   ElevatedButton(
                     onPressed: _navigateToCreateExpense,
                     child: const Text('Agregar primer gasto'),
@@ -95,55 +107,80 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
+          // 4. Finally show the list when we have data and it's not empty
+          final gastos = snapshot.data as List<Gasto>;
+
+          // ListView.builder with spacing instead of Divider
+          // No bottom padding needed - FAB handles visual balance
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(
+              horizontal: FiscalAtelierTheme.paddingScreenHorizontal,
+              vertical: FiscalAtelierTheme.space16,
+            ),
             itemCount: gastos.length,
-            separatorBuilder: (_, __) => const Divider(height: 24),
             itemBuilder: (context, index) {
               final gasto = gastos[index];
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              // Floating card with fully rounded corners (pill-like)
+              // Uses spacing instead of Divider between items
+              return Padding(
+                // Spacing between cards - using 16px for cleaner 8px system
+                padding: const EdgeInsets.only(
+                  bottom: FiscalAtelierTheme.space16,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              gasto.descripcion,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: FiscalAtelierTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(
+                      FiscalAtelierTheme.radiusLg,
+                    ),
+                    boxShadow: FiscalAtelierTheme.cardShadow,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(
+                      FiscalAtelierTheme.paddingCard,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Row with description and amount
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                gasto.descripcion,
+                                style: FiscalAtelierTheme.titleSm.copyWith(
+                                  color: FiscalAtelierTheme.neutral800,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            '\$${(gasto.monto / 100).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                            const SizedBox(width: FiscalAtelierTheme.space12),
+                            // Primary color for positive amounts (titleSm already has w600)
+                            Text(
+                              '\$${(gasto.monto / 100).toStringAsFixed(2)}',
+                              style: FiscalAtelierTheme.titleSm.copyWith(
+                                color: FiscalAtelierTheme.primary,
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: FiscalAtelierTheme.space12),
+                        // Metadata: label-md (12sp)
+                        Text(
+                          'Pagado por: ${gasto.pagadoPor}',
+                          style: FiscalAtelierTheme.labelMd.copyWith(
+                            color: FiscalAtelierTheme.neutral500,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Pagado por: ${gasto.pagadoPor}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Fecha: ${_formatDate(gasto.fecha)}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: FiscalAtelierTheme.space4),
+                        Text(
+                          'Fecha: ${_formatDate(gasto.fecha)}',
+                          style: FiscalAtelierTheme.labelMd.copyWith(
+                            color: FiscalAtelierTheme.neutral500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -153,8 +190,8 @@ class _GastosListaScreenState extends State<GastosListaScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToCreateExpense,
-        child: const Icon(Icons.add),
         tooltip: 'Nuevo gasto',
+        child: const Icon(Icons.add),
       ),
     );
   }

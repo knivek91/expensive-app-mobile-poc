@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/gasto_service.dart';
+import '../theme/fiscal_atelier_theme.dart';
 
 class BalanceScreen extends StatefulWidget {
   const BalanceScreen({Key? key}) : super(key: key);
@@ -9,9 +10,6 @@ class BalanceScreen extends StatefulWidget {
 }
 
 class _BalanceScreenState extends State<BalanceScreen> {
-  final GastoService _gastoService = GastoService();
-  late Stream<List<dynamic>> _gastosStream;
-
   @override
   void initState() {
     super.initState();
@@ -23,33 +21,54 @@ class _BalanceScreenState extends State<BalanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: FiscalAtelierTheme.surfaceDefault,
       appBar: AppBar(
-        title: const Text('Balance de Gastos'),
+        backgroundColor: FiscalAtelierTheme.surfaceDefault,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          'Balance de Gastos',
+          style: FiscalAtelierTheme.headlineSm.copyWith(
+            color: FiscalAtelierTheme.neutral800,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: FiscalAtelierTheme.neutral700,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        centerTitle: false,
+        toolbarHeight: 64,
       ),
       body: FutureBuilder<Map<String, double>>(
         future: _getBalances(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                color: FiscalAtelierTheme.primary,
+              ),
+            );
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: FiscalAtelierTheme.bodyMd.copyWith(
+                  color: FiscalAtelierTheme.accent,
+                ),
+              ),
+            );
           }
 
           final balances = snapshot.data ?? {};
 
           if (balances.isEmpty) {
-            return const Center(
-              child: Text(
-                'No hay gastos registrados aún',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            );
+            return _buildEmptyState();
           }
 
           double totalGastos = balances.values.fold(
@@ -59,44 +78,250 @@ class _BalanceScreenState extends State<BalanceScreen> {
           // Assuming two users for simplicity - in reality we'd need to know all participants
           double promedio = totalGastos / 2;
 
-          return ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              const Icon(Icons.show_chart, size: 64, color: Colors.blue),
-              const SizedBox(height: 24),
-              const Text(
-                'Balance de Gastos',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 32),
-              _buildBalanceInfo(
-                'Total Gastos',
-                '\$${totalGastos.toStringAsFixed(2)}',
-                Icons.attach_money,
-                Colors.green,
-              ),
-              const SizedBox(height: 16),
-              _buildBalanceInfo(
-                'Promedio por persona',
-                '\$${promedio.toStringAsFixed(2)}',
-                Icons.equalizer,
-                Colors.blue,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Detalles por persona:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ...balances.entries
-                  .map(
-                    (entry) =>
-                        _buildPersonBalance(entry.key, entry.value, promedio),
-                  )
-                  .toList(),
-            ],
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: FiscalAtelierTheme.paddingScreenHorizontal,
+              vertical: FiscalAtelierTheme.paddingScreenVertical,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Hero balance icon with tonal background
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: FiscalAtelierTheme.primaryLighter,
+                    borderRadius: BorderRadius.circular(
+                      FiscalAtelierTheme.radiusFull,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 40,
+                    color: FiscalAtelierTheme.primary,
+                  ),
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space24),
+
+                // Screen title (headline-sm)
+                Text(
+                  'Balance de Gastos',
+                  style: FiscalAtelierTheme.headlineSm.copyWith(
+                    color: FiscalAtelierTheme.neutral800,
+                  ),
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space32),
+
+                // Total Gastos card with floating design - fully rounded
+                _buildBalanceCard(
+                  label: 'Total Gastos',
+                  amount: '\$${totalGastos.toStringAsFixed(2)}',
+                  icon: Icons.attach_money,
+                  isPositive: true,
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space16),
+
+                // Promedio card - fully rounded
+                _buildBalanceCard(
+                  label: 'Promedio por persona',
+                  amount: '\$${promedio.toStringAsFixed(2)}',
+                  icon: Icons.equalizer,
+                  isPositive: false,
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space32),
+
+                // Section title
+                Text(
+                  'Detalles por persona:',
+                  style: FiscalAtelierTheme.titleSm.copyWith(
+                    color: FiscalAtelierTheme.neutral700,
+                  ),
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space16),
+
+                // Person balance list with spacing (no dividers)
+                ...balances.entries.map(
+                  (entry) =>
+                      _buildPersonBalanceItem(entry.key, entry.value, promedio),
+                ),
+
+                // Bottom spacing for scroll content
+                const SizedBox(height: FiscalAtelierTheme.space40),
+              ],
+            ),
           );
         },
+      ),
+    );
+  }
+
+  /// Build empty state with appropriate icon, typography, and spacing
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(
+          FiscalAtelierTheme.paddingScreenHorizontal,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon with neutral tonal background -fully rounded
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: FiscalAtelierTheme.neutral200,
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusFull,
+                ),
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 40,
+                color: FiscalAtelierTheme.neutral500,
+              ),
+            ),
+            const SizedBox(height: FiscalAtelierTheme.space24),
+            Text(
+              'No hay gastos registrados aún',
+              style: FiscalAtelierTheme.labelMd.copyWith(
+                color: FiscalAtelierTheme.neutral500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: FiscalAtelierTheme.space8),
+            Text(
+              'Agrega tus primeros gastos para ver el balance',
+              style: FiscalAtelierTheme.bodySm.copyWith(
+                color: FiscalAtelierTheme.neutral400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Floating card with fully rounded (pill-like) corners - using Container with BoxDecoration
+  Widget _buildBalanceCard({
+    required String label,
+    required String amount,
+    required IconData icon,
+    required bool isPositive,
+  }) {
+    final color = isPositive
+        ? FiscalAtelierTheme.primary
+        : FiscalAtelierTheme.secondary;
+    final bgColor = isPositive
+        ? FiscalAtelierTheme.primaryLighter
+        : FiscalAtelierTheme.secondaryLighter;
+
+    return Container(
+      padding: const EdgeInsets.all(FiscalAtelierTheme.paddingCard),
+      decoration: BoxDecoration(
+        color: FiscalAtelierTheme.surfaceElevated,
+        borderRadius: BorderRadius.circular(FiscalAtelierTheme.radiusFull),
+        boxShadow: FiscalAtelierTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          // Icon container with tonal background - fully rounded
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(
+                FiscalAtelierTheme.radiusFull,
+              ),
+            ),
+            child: Icon(icon, size: 28, color: color),
+          ),
+          const SizedBox(width: FiscalAtelierTheme.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Label (metadata - label-md)
+                Text(
+                  label,
+                  style: FiscalAtelierTheme.labelMd.copyWith(
+                    color: FiscalAtelierTheme.neutral500,
+                  ),
+                ),
+                const SizedBox(height: FiscalAtelierTheme.space4),
+                // Amount (display-md for hero balances)
+                Text(
+                  amount,
+                  style: FiscalAtelierTheme.displayMd.copyWith(
+                    color: FiscalAtelierTheme.neutral800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Person balance item with spacing, no dividers - fully rounded
+  Widget _buildPersonBalanceItem(
+    String person,
+    double amountPaid,
+    double promedio,
+  ) {
+    double difference = amountPaid - promedio;
+    bool isCreditor = difference > 0;
+
+    final amountColor = isCreditor
+        ? FiscalAtelierTheme.primary
+        : FiscalAtelierTheme.secondary;
+    final prefix = isCreditor ? '+ ' : '- ';
+    final bgColor = isCreditor
+        ? FiscalAtelierTheme.primaryLighter
+        : FiscalAtelierTheme.secondaryLighter;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FiscalAtelierTheme.space12),
+      child: Container(
+        padding: const EdgeInsets.all(FiscalAtelierTheme.paddingItem),
+        decoration: BoxDecoration(
+          color: FiscalAtelierTheme.surfaceRaised,
+          borderRadius: BorderRadius.circular(FiscalAtelierTheme.radiusFull),
+        ),
+        child: Row(
+          children: [
+            // Person name (title-sm)
+            Expanded(
+              child: Text(
+                person,
+                style: FiscalAtelierTheme.titleSm.copyWith(
+                  color: FiscalAtelierTheme.neutral800,
+                ),
+              ),
+            ),
+            // Amount with tonal background container -fully rounded
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: FiscalAtelierTheme.space12,
+                vertical: FiscalAtelierTheme.space8,
+              ),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusFull,
+                ),
+              ),
+              child: Text(
+                '$prefix\$${difference.abs().toStringAsFixed(2)}',
+                style: FiscalAtelierTheme.titleSm.copyWith(color: amountColor),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -109,71 +334,5 @@ class _BalanceScreenState extends State<BalanceScreen> {
     } finally {
       tempService.dispose();
     }
-  }
-
-  Widget _buildBalanceInfo(
-    String label,
-    String amount,
-    IconData icon,
-    Color color,
-  ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    amount,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPersonBalance(
-    String person,
-    double amountPaid,
-    double promedio,
-  ) {
-    double difference = amountPaid - promedio;
-    bool isCreditor = difference > 0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(child: Text(person, style: const TextStyle(fontSize: 16))),
-          Text(
-            '${isCreditor ? '+ ' : '- '}\$${difference.abs().toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isCreditor ? Colors.green : Colors.red,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

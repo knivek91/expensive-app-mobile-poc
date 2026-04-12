@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/gasto.dart';
 import '../services/gasto_service.dart';
+import '../theme/fiscal_atelier_theme.dart';
 
 class GastoCrearScreen extends StatefulWidget {
   const GastoCrearScreen({Key? key}) : super(key: key);
@@ -47,9 +48,14 @@ class _GastoCrearScreenState extends State<GastoCrearScreen> {
       });
 
       try {
+        final monto = double.parse(_montoController.text);
+        if (monto <= 0) {
+          throw const FormatException('El monto debe ser mayor a cero');
+        }
+
         final gasto = Gasto(
           descripcion: _descripcionController.text.trim(),
-          monto: (double.parse(_montoController.text) * 100).round(),
+          monto: (monto * 100).round(),
           fecha: _fechaSeleccionada,
           pagadoPor: _pagadoPorController.text.trim(),
         );
@@ -58,14 +64,38 @@ class _GastoCrearScreenState extends State<GastoCrearScreen> {
         if (mounted) {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gasto agregado exitosamente')),
+            SnackBar(
+              content: Text(
+                'Gasto agregado',
+                style: FiscalAtelierTheme.bodyMd.copyWith(color: Colors.white),
+              ),
+              backgroundColor: FiscalAtelierTheme.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusMd,
+                ),
+              ),
+            ),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error: ${e.toString()}',
+                style: FiscalAtelierTheme.bodyMd.copyWith(color: Colors.white),
+              ),
+              backgroundColor: FiscalAtelierTheme.secondary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusMd,
+                ),
+              ),
+            ),
+          );
         }
       } finally {
         if (mounted) {
@@ -80,101 +110,303 @@ class _GastoCrearScreenState extends State<GastoCrearScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo Gasto')),
+      appBar: AppBar(
+        title: Text(
+          'Nuevo Gasto',
+          style: FiscalAtelierTheme.headlineSm.copyWith(
+            color: FiscalAtelierTheme.neutral800,
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(
+          horizontal: FiscalAtelierTheme.paddingScreenHorizontal,
+          vertical: FiscalAtelierTheme.paddingScreenVertical,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
+              // Descripción field - Filled style with background shift on focus
+              Text(
+                'Descripción',
+                style: FiscalAtelierTheme.labelMd.copyWith(
+                  color: FiscalAtelierTheme.neutral600,
+                ),
+              ),
+              const SizedBox(height: FiscalAtelierTheme.space8),
+              _buildTextField(
                 controller: _descripcionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  border: OutlineInputBorder(),
+                hintText: '¿Qué gastaste?',
+                style: FiscalAtelierTheme.bodyMd.copyWith(
+                  color: FiscalAtelierTheme.neutral800,
+                ),
+                hintStyle: FiscalAtelierTheme.bodyMd.copyWith(
+                  color: FiscalAtelierTheme.neutral400,
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese una descripción';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Ingresa una descripción';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _montoController,
-                decoration: const InputDecoration(
-                  labelText: 'Monto (\$)',
-                  prefixText: '\$ ',
-                  border: OutlineInputBorder(),
+
+              const SizedBox(height: FiscalAtelierTheme.space24),
+
+              // Monto field - Large editorial style with primary tonal background
+              Text(
+                'Monto',
+                style: FiscalAtelierTheme.labelMd.copyWith(
+                  color: FiscalAtelierTheme.neutral600,
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: FiscalAtelierTheme.space8),
+              _buildTextField(
+                controller: _montoController,
+                hintText: '0.00',
+                style: FiscalAtelierTheme.titleLg.copyWith(
+                  color: FiscalAtelierTheme.neutral800,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintStyle: FiscalAtelierTheme.titleLg.copyWith(
+                  color: FiscalAtelierTheme.neutral400,
+                  fontWeight: FontWeight.w500,
+                ),
+                prefixText: '\$ ',
+                prefixStyle: FiscalAtelierTheme.titleLg.copyWith(
+                  color: FiscalAtelierTheme.neutral500,
+                  fontWeight: FontWeight.w500,
+                ),
+                isMonto: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese un monto';
+                    return 'Ingresa un monto';
                   }
-                  if (double.tryParse(value) == null) {
-                    return 'Por favor ingrese un número válido';
+                  final parsed = double.tryParse(value);
+                  if (parsed == null) {
+                    return 'Ingresa un número válido';
                   }
-                  if (double.parse(value) <= 0) {
+                  if (parsed <= 0) {
                     return 'El monto debe ser mayor a cero';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
+
+              const SizedBox(height: FiscalAtelierTheme.space24),
+
+              // Pagado por field - Filled style with background shift on focus
+              Text(
+                'Pagado por',
+                style: FiscalAtelierTheme.labelMd.copyWith(
+                  color: FiscalAtelierTheme.neutral600,
+                ),
+              ),
+              const SizedBox(height: FiscalAtelierTheme.space8),
+              _buildTextField(
                 controller: _pagadoPorController,
-                decoration: const InputDecoration(
-                  labelText: 'Pagado por',
-                  border: OutlineInputBorder(),
+                hintText: '¿Quién pagó?',
+                style: FiscalAtelierTheme.bodyMd.copyWith(
+                  color: FiscalAtelierTheme.neutral800,
+                ),
+                hintStyle: FiscalAtelierTheme.bodyMd.copyWith(
+                  color: FiscalAtelierTheme.neutral400,
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese quién pagó';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Ingresa quién pagó';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Fecha: ${_fechaSeleccionada.day}/${_fechaSeleccionada.month}/${_fechaSeleccionada.year}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
+
+              const SizedBox(height: FiscalAtelierTheme.space24),
+
+              // Fecha selector - Tonal section with background separation
+              Container(
+                padding: const EdgeInsets.all(FiscalAtelierTheme.space16),
+                decoration: BoxDecoration(
+                  color: FiscalAtelierTheme.surfaceRaised,
+                  borderRadius: BorderRadius.circular(
+                    FiscalAtelierTheme.radiusMd,
                   ),
-                  TextButton(
-                    onPressed: () => _seleccionarFecha(context),
-                    child: const Text('Cambiar fecha'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _guardarGasto,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Fecha',
+                            style: FiscalAtelierTheme.labelMd.copyWith(
+                              color: FiscalAtelierTheme.neutral500,
+                            ),
+                          ),
+                          const SizedBox(height: FiscalAtelierTheme.space4),
+                          Text(
+                            '${_fechaSeleccionada.day}/${_fechaSeleccionada.month}/${_fechaSeleccionada.year}',
+                            style: FiscalAtelierTheme.bodyMd.copyWith(
+                              color: FiscalAtelierTheme.neutral800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _seleccionarFecha(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: FiscalAtelierTheme.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: FiscalAtelierTheme.space16,
+                          vertical: FiscalAtelierTheme.space12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            FiscalAtelierTheme.radiusMd,
                           ),
                         ),
-                      )
-                    : const Text('Guardar Gasto'),
+                      ),
+                      child: Text(
+                        'Cambiar',
+                        style: FiscalAtelierTheme.titleSm.copyWith(
+                          color: FiscalAtelierTheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
+              const SizedBox(height: FiscalAtelierTheme.space32),
+
+              // Primary button - FilledButton with primary color (#0a8d6a)
+              _buildPrimaryButton(),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Builds a text field with focus state using background shift (not border)
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required TextStyle style,
+    required TextStyle hintStyle,
+    String? prefixText,
+    TextStyle? prefixStyle,
+    bool isMonto = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Focus(
+      onFocusChange: (hasFocus) {
+        // Trigger rebuild to update focus state
+        setState(() {});
+      },
+      child: Builder(
+        builder: (context) {
+          final isFocused = Focus.of(context).hasFocus;
+
+          return TextFormField(
+            controller: controller,
+            style: style,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: hintStyle,
+              prefixText: prefixText,
+              prefixStyle: prefixStyle,
+              filled: true,
+              // Use background shift on focus instead of border
+              fillColor: isMonto
+                  ? (isFocused
+                        ? FiscalAtelierTheme.primaryLighter.withValues(
+                            alpha: 0.4,
+                          )
+                        : FiscalAtelierTheme.primaryLighter.withValues(
+                            alpha: 0.2,
+                          ))
+                  : (isFocused
+                        ? FiscalAtelierTheme.surfaceMuted
+                        : FiscalAtelierTheme.surfaceSubtle),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusMd,
+                ),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusMd,
+                ),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  FiscalAtelierTheme.radiusMd,
+                ),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: FiscalAtelierTheme.space20,
+                vertical: isMonto
+                    ? FiscalAtelierTheme.space20
+                    : FiscalAtelierTheme.space16,
+              ),
+            ),
+            validator: validator,
+          );
+        },
+      ),
+    );
+  }
+
+  /// Builds primary button with loading state following design system
+  Widget _buildPrimaryButton() {
+    return FilledButton(
+      onPressed: _isLoading ? null : _guardarGasto,
+      style: FilledButton.styleFrom(
+        backgroundColor: FiscalAtelierTheme.primary,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: FiscalAtelierTheme.neutral300,
+        disabledForegroundColor: FiscalAtelierTheme.neutral500,
+        padding: const EdgeInsets.symmetric(
+          horizontal: FiscalAtelierTheme.space24,
+          vertical: FiscalAtelierTheme.space16,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(FiscalAtelierTheme.radiusMd),
+        ),
+        elevation: 0,
+      ),
+      child: _isLoading
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            )
+          : Text(
+              'Guardar Gasto',
+              style: FiscalAtelierTheme.titleSm.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
     );
   }
 }
