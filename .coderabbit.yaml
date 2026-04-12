@@ -1,0 +1,96 @@
+# CodeRabbit Configuration for Flutter/Dart Project
+# https://coderabbit.ai
+
+# Review settings
+reviews:
+  enabled: true
+  path_filters:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+    - "android/**"
+    - "ios/**"
+    - "web/**"
+    - "linux/**"
+    - "macos/**"
+    - "windows/**"
+    - "build/**"
+    - ".dart_tool/**"
+    - ".pub-cache/**"
+    - "test/*.fake.dart"
+    - "**/.firebase/**"
+    - "lib/firebase_options.dart"
+    - "lib/**/*.firebase.dart"
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: true
+  
+  # Path-specific instructions for Flutter/Dart codebase
+  path_instructions:
+    - path: "lib/**"
+      instructions: |
+        This is a Flutter/Dart application with a simple directory structure.
+
+        Focus on:
+        - No business logic inside widgets (use services)
+        - Proper state management usage (Provider, Riverpod, Bloc, etc.)
+        - Null safety correctness
+        - Widget rebuild optimization (avoid unnecessary rebuilds)
+        - Code readability and modularity
+        - Avoid duplicated code
+        - Proper error handling
+
+        Flag:
+        - Large widgets without separation (>100 lines)
+        - Heavy logic inside build() method
+        - Improper async handling
+        - Missing dispose methods for controllers
+        - Hardcoded strings (use constants/l10n)
+
+    - path: "lib/models/**"
+      instructions: |
+        Data models and entities.
+
+        Validate:
+        - Proper JSON serialization (fromJson / toJson)
+        - Null safety compliance
+        - Immutable design (use final fields)
+        - Proper typing (avoid dynamic)
+        - Documentation for public APIs
+
+    - path: "lib/services/**"
+      instructions: |
+        Business logic and external services layer.
+
+        Ensure:
+        - Business logic isolated from UI
+        - Proper abstraction over SDKs (Firebase, APIs, etc.)
+        - No direct Firebase/API calls in widgets (use services)
+        - Error handling and logging
+        - API timeout configurations
+        - No hardcoded secrets or credentials
+
+    - path: "lib/screens/**"
+      instructions: |
+        UI screens - Flutter widgets and screens.
+
+        Ensure:
+        - Pure presentation logic only
+        - No direct Firebase or API calls (use services)
+        - Proper widget composition and reuse
+        - Responsive design considerations
+        - Accessibility best practices
+        - Theme consistency
+
+    - path: "test/**"
+      instructions: |
+        Test files.
+
+        Validate:
+        - Good test coverage
+        - Proper arrange-act-assert structure
+        - Mock external dependencies
+        - Test naming conventions
