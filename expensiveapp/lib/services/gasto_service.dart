@@ -5,8 +5,13 @@ class GastoService {
   static GastoService? _instance;
 
   final List<Gasto> _gastos = [];
-  final StreamController<List<Gasto>> _gastosController =
-      StreamController<List<Gasto>>.broadcast();
+  late final StreamController<List<Gasto>> _gastosController =
+      StreamController<List<Gasto>>.broadcast(
+        onListen: () {
+          // Emit current state when a listener subscribes
+          _gastosController.add(List.unmodifiable(_gastos));
+        },
+      );
 
   Stream<List<Gasto>> get gastosStream => _gastosController.stream;
 
@@ -14,9 +19,7 @@ class GastoService {
     return instance;
   }
 
-  GastoService._internal() {
-    _gastosController.add(_gastos);
-  }
+  GastoService._internal();
 
   static GastoService get instance {
     _instance ??= GastoService._internal();
@@ -47,5 +50,6 @@ class GastoService {
 
   void dispose() {
     _gastosController.close();
+    _instance = null; // Reset singleton so future calls create fresh service
   }
 }
