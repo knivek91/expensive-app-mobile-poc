@@ -22,7 +22,7 @@ class GastoService {
 
     // Cancel inner subscription when outer subscriber cancels
     controller.onCancel = () => subscription.cancel();
-  });
+  }, isBroadcast: true);
 
   factory GastoService() {
     return instance;
