@@ -1,33 +1,57 @@
 # CodeRabbit Configuration for Flutter/Dart Project
 # https://coderabbit.ai
+# 
+# Optimized configuration based on CodeRabbit best practices for Flutter/Dart projects
+
+# Language setting for reviews
+language: "en-US"
 
 # Review settings
 reviews:
   enabled: true
+  # Use "assertive" profile for more thorough code reviews
+  profile: "assertive"
+  # Enable request changes workflow for interactive reviews
+  request_changes_workflow: true
+  # High-level summary of changes in review
+  high_level_summary: true
+  # Automatic review settings
+  auto_review:
+    enabled: true
+    drafts: true
+
+  # Collapse the walkthrough in PR comments
+  collapse_walkthrough: true
+  # Enable sequence diagrams for architecture visualization
+  sequence_diagrams: true
+  # Enable code review effort estimation
+  estimate_code_review_effort: true
+
+  # Path filters - include our app code, exclude generated/build files
   path_filters:
+    # Include our app code
+    - "expensiveapp/lib/**"
+    # Exclude generated files
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "**/*.mocks.dart"
+    # Exclude platform-specific folders
     - "android/**"
     - "ios/**"
     - "web/**"
     - "linux/**"
     - "macos/**"
     - "windows/**"
+    # Exclude build artifacts
     - "build/**"
     - ".dart_tool/**"
     - ".pub-cache/**"
     - "test/*.fake.dart"
+    # Exclude Firebase config
     - "**/.firebase/**"
     - "lib/firebase_options.dart"
     - "lib/**/*.firebase.dart"
-  profile: "assertive"
-  request_changes_workflow: true
-  high_level_summary: true
-  auto_review:
-    enabled: true
-    drafts: true
-  
+
   # Path-specific instructions for Flutter/Dart codebase
   path_instructions:
     - path: "lib/**"
@@ -94,3 +118,32 @@ reviews:
         - Proper arrange-act-assert structure
         - Mock external dependencies
         - Test naming conventions
+
+# Tools section - enable/disable specific linters and tools
+tools:
+  # Enable Flutter/Dart-specific tools
+  enabled:
+    - flutter
+    - dart
+    - go
+    - terraform
+    - docker
+    - javascript
+    - typescript
+  # Disable tools not needed for Flutter/Dart projects
+  disabled:
+    - rubocop      # Ruby linter - not used in Flutter project
+    - swiftlint    # Swift linter - not used in Flutter project
+    - tflint       # Terraform linter - keep enabled if needed
+    - eslint      # JS/TS - consider disabling if purely Dart
+    - gitleaks    # Security scanner - keep for secrets detection
+
+# Chat section - enable AI chat features
+chat:
+  auto_reply: true
+
+# Knowledge base for learning from codebase
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
